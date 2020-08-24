@@ -1,0 +1,7 @@
+.button-root {
+    justify-items: center;
+}
+.button-label p {
+    font-size: 12px;
+    margin-bottom: 0px;
+}

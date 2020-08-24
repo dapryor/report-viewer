@@ -1,0 +1,174 @@
+module tme-demo-ui {
+
+  namespace "http://com.example/tme-demo-ui";
+  prefix tme-demo-ui;
+
+  import tailf-common {
+    prefix tailf;
+  }
+
+  import tailf-ncs {
+    prefix ncs;
+  }
+
+  import tailf-webui {
+    prefix webui;
+  }
+
+  typedef icon-type {
+    type enumeration {
+      enum "antenna";
+      enum "customer-router";
+      enum "firewall";
+      enum "generic";
+      enum "load-balancer";
+      enum "router";
+      enum "service-chain";
+      enum "switch";
+      enum "web-server";
+    }
+  }
+
+  typedef icon-coordinate {
+    type decimal64 {
+      fraction-digits 18;
+      range "0 .. 1";
+    }
+    description "Normalized relative coordinate";
+  }
+
+  grouping icon-coordinates {
+    container coord {
+      leaf x {
+        type icon-coordinate;
+      }
+
+      leaf y {
+        type icon-coordinate;
+      }
+    }
+  }
+
+  augment "/webui:webui/webui:data-stores"  {
+
+    container static-map {
+
+      tailf:info "Static map icon information";
+
+      list icon {
+        key name;
+
+        leaf name {
+            type string;
+        }
+
+        choice item-type {
+          case device {
+            leaf device {
+              tailf:non-strict-leafref {
+                path "/ncs:devices/ncs:device/ncs:name";
+              }
+              type string;
+            }
+          }
+
+          case ns-info {
+            leaf ns-info {
+        //      tailf:non-strict-leafref {
+        //        path "/nfvo-rel2:nfvo/nfvo-rel2:ns-info/nfvo-rel2-esc:esc/nfvo-rel2-esc:ns-info/nfvo-rel2-esc:id";
+        //      }
+              type string;
+            }
+          }
+        }
+
+        leaf type {
+          type icon-type;
+        }
+
+        leaf container {
+          type leafref {
+            path "/webui:webui/webui:data-stores/topology-layout/name";
+          }
+        }
+
+        uses icon-coordinates;
+
+        list zoomed {
+          key container;
+
+          leaf container {
+            type leafref {
+              path "/webui:webui/webui:data-stores/topology-layout/name";
+            }
+          }
+
+          uses icon-coordinates;
+        }
+
+        leaf underlay {
+          type boolean;
+        }
+      }
+    }
+
+    list topology-layout {
+      key name;
+      ordered-by user;
+      description
+        "List of layout sections (containers) and their widths.
+         The containers will be rendered in order, left to right";
+
+      leaf name {
+        type string;
+        description
+          "Name of the container.
+           This is referenced by each icon container leaf";
+      }
+
+      leaf width {
+        type uint8 {
+          range "0..100";
+        }
+        must "sum(../../topology-layout/width) = 100" {
+          error-message "The container widths must add up to 100%";
+        }
+        description "The width of the container in percent";
+      }
+
+      leaf title {
+        type string;
+      }
+
+      leaf connection-colour {
+        type string;
+      }
+
+      list zoomed {
+        key title;
+        ordered-by user;
+        description
+          "A list of child containers that will be rendered in as the
+           background when the container is zoomed";
+
+        leaf title {
+          type string;
+        }
+
+        leaf width {
+          type uint8 {
+            range "0..100";
+          }
+          must "sum(../../zoomed/width) = 100" {
+            error-message "The container widths must add up to 100%";
+          }
+          description "The width of the container in percent";
+        }
+      }
+    }
+  }
+}
+
+
+
+
